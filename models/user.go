@@ -1,6 +1,7 @@
 package models
 
 import (
+	"log"
 	"time"
 )
 
@@ -39,4 +40,6 @@ func init() {
 
 	err := dbmap.CreateTablesIfNotExists()
 	checkErr(err, "Create tables failed")
+
+	log.Println("Users table created")
 }

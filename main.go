@@ -9,18 +9,14 @@ import (
 func main() {
 	defer models.Close()
 
-	models.InitializeTables()
-
 	u1 := models.User{
-		Id:          1,
-		Username:    "brianstarke",
-		DisplayName: "Brian Starke",
-		AvatarUrl:   "http://www.google.com",
+		Username: "brianstarke",
+		Email:    "brian.starke@gmail.com",
 	}
 
 	u1.Save()
 
 	user := models.User{}
 	user = user.FindById(1)
-	log.Println(user.DisplayName)
+	log.Println(user.Username)
 }
