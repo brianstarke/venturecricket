@@ -13,3 +13,5 @@ type badRequest struct{ error }
 // notFound is handled by setting the status code in
 // reply to StatusNotFound
 type notFound struct{ error }
+
+// TODO fill in routes
