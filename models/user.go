@@ -13,20 +13,14 @@ type User struct {
 	Score       int32
 }
 
-func UserCreate(id int64, username string, displayName string, avatarUrl string) {
-	user := User{
-		CreatedAt:   time.Now().UnixNano(),
-		Id:          id,
-		Username:    username,
-		DisplayName: displayName,
-		AvatarUrl:   avatarUrl,
-	}
+func (u *User) Save() {
+	u.CreatedAt = time.Now().UnixNano()
 
-	err := dbmap.Insert(&user)
-	checkErr(err, "UserCreate failed")
+	err := dbmap.Insert(u)
+	checkErr(err, "User.create failed")
 }
 
-func UserFindById(id int64) User {
+func (u *User) FindById(id int64) User {
 	user := User{}
 
 	err := dbmap.SelectOne(&user, "SELECT * FROM users WHERE id=?", id)
