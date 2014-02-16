@@ -10,6 +10,7 @@ import (
 
 var dbmap *gorp.DbMap
 
+// Closes the database connection
 func Close() {
 	dbmap.Db.Close()
 	log.Println("Database connection closed")
