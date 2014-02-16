@@ -11,21 +11,13 @@ import (
 
 var dbmap *gorp.DbMap
 
-// creates all the tables needed, unless they already exist
-func InitializeTables() {
-	dbmap.AddTableWithName(User{}, "users")
-
-	err := dbmap.CreateTablesIfNotExists()
-	checkErr(err, "Create tables failed")
-}
-
 func Close() {
 	dbmap.Db.Close()
 	log.Println("Database connection closed")
 }
 
 func init() {
-	db, err := sql.Open("mysql", "vcricket:password@/vcricket")
+	db, err := sql.Open("mysql", "vcricket:password@/venturecricket")
 	checkErr(err, "sql.Open failed")
 
 	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{Engine: "InnoDB", Encoding: "UTF8"}}

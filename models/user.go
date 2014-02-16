@@ -5,12 +5,13 @@ import (
 )
 
 type User struct {
-	Id          int64 // the users twitter ID
-	CreatedAt   int64
-	Username    string
-	DisplayName string
-	AvatarUrl   string
-	Score       int32
+	Id             int64
+	CreatedAt      int64
+	Username       string
+	Email          string
+	HashedPassword string
+	Salt           string
+	Score          int64
 }
 
 func (u *User) Save() {
@@ -27,4 +28,15 @@ func (u *User) FindById(id int64) User {
 	checkErr(err, "UserFindById failed")
 
 	return user
+}
+
+// initialize the Users table
+func init() {
+	u := dbmap.AddTableWithName(User{}, "users")
+	u.SetKeys(true, "Id")
+	u.ColMap("Username").SetUnique(true).SetNotNull(true)
+	u.ColMap("Email").SetUnique(true).SetNotNull(true)
+
+	err := dbmap.CreateTablesIfNotExists()
+	checkErr(err, "Create tables failed")
 }
