@@ -32,4 +32,4 @@ build:
     - hipchat-notify:
         token: BHKKg7iyStiMEVr8QUE3vXRpxWxppQxpZ2wlz1p8
         room-id: 449912
-        from-name: BRONSTEIN
+        from-name: brian
