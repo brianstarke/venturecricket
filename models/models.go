@@ -21,8 +21,10 @@ func init() {
 	checkErr(err, "sql.Open failed")
 
 	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{Engine: "InnoDB", Encoding: "UTF8"}}
-
 	log.Println("Connected to database")
+
+	card := Card{}
+	card.Init(dbmap)
 }
 
 func checkErr(err error, msg string) {
