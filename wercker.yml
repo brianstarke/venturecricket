@@ -30,6 +30,6 @@ build:
   after-steps:
     - wercker/hipchat-notify@1.0.3
     - hipchat-notify:
-        token: "BHKKg7iyStiMEVr8QUE3vXRpxWxppQxpZ2wlz1p8"
+        token: BHKKg7iyStiMEVr8QUE3vXRpxWxppQxpZ2wlz1p8
         room-id: 449912
         from-name: BRONSTEIN
