@@ -31,4 +31,4 @@ build:
     - hipchat-notify:
         token: $HIPCHAT_TOKEN
         room-id: 449912
-        from-name: brian
+        from-name: YOUR MOTHER
