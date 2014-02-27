@@ -26,9 +26,3 @@ build:
         name: go test
         code: |
           go test ./...
-
-  after-steps:
-    - hipchat-notify:
-        token: $HIPCHAT_TOKEN
-        room-id: 449912
-        from-name: YOUR MOTHER
