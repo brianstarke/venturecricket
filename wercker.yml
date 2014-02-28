@@ -31,6 +31,6 @@ deploy:
   steps:
     - sjoerdmulder/rsync-deploy@0.0.7:
         host: vc.dogfort.io
-        user: root
+        user: brian
         directory: /home/brian/test
         sshkey: $PRIVATEKEY_FILE
