@@ -29,8 +29,21 @@ build:
 
 deploy:
   steps:
+    - add-to-known_hosts:
+        hostname: vc.dogfort.io
+
+    - mktemp:
+      envvar: PRIVATEKEY_PATH
+
+    - create-file:
+      name: write key
+      filename: $PRIVATEKEY_PATH
+      content: $DEPLOY_KEY_PRIVATE
+      overwrite: true
+      hide-from-log: true
+
     - sjoerdmulder/rsync-deploy@0.0.7:
         host: vc.dogfort.io
-        user: brian
+        user: root
         directory: /home/brian/test
-        sshkey: $PRIVATEKEY_FILE
+        sshkey: $PRIVATEKEY_PATH
