@@ -29,7 +29,7 @@ build:
 
 deploy:
   steps:
-    - sjoerdmulder/rsync-deploy@0.0.7
+    - sjoerdmulder/rsync-deploy@0.0.7:
         host: vc.dogfort.io
         directory: /test
         sshkey: $PRIVATEKEY_FILE
