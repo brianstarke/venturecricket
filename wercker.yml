@@ -39,5 +39,5 @@ deploy:
     - sjoerdmulder/rsync-deploy@0.0.7:
         host: vc.dogfort.io
         user: root
-        directory: /home/brian/venturecricket
+        directory: /home/brian/venturecricket-deploy
         sshkey: $PRIVATEKEY_PATH
