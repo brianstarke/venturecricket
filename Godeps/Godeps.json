@@ -3,6 +3,16 @@
 	"GoVersion": "go1.2",
 	"Deps": [
 		{
+			"ImportPath": "code.google.com/p/go.crypto/bcrypt",
+			"Comment": "null-191",
+			"Rev": "7aa593ce8ceaf0199504fff27455bbb60eedabc7"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.crypto/blowfish",
+			"Comment": "null-191",
+			"Rev": "7aa593ce8ceaf0199504fff27455bbb60eedabc7"
+		},
+		{
 			"ImportPath": "code.google.com/p/goprotobuf/proto",
 			"Comment": "go.r60-138",
 			"Rev": "8af8443f6427e7a7faa07fbc40d88f5a61f7892c"
@@ -15,6 +25,11 @@
 			"ImportPath": "github.com/codegangsta/martini",
 			"Comment": "v0.1-105-gcab2ee6",
 			"Rev": "cab2ee60a6dfb2ab2cd742fbc0ba35b135b1205d"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/martini-contrib/render",
+			"Comment": "v0.1-159-g8ce6181",
+			"Rev": "8ce6181c2609699e4c7cd30994b76a850a9cdadc"
 		},
 		{
 			"ImportPath": "github.com/dancannon/gorethink",

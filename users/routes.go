@@ -62,12 +62,12 @@ func CreateUser(userDomain *domain.UserDomain, req *http.Request, r render.Rende
 		return
 	}
 
-	id, err := domain.CreateUser(&u)
+	id, err := userDomain.CreateUser(&u)
 
 	if err != nil {
 		r.JSON(500, map[string]interface{}{"serverError": err.Error()})
 	} else {
-		r.JSON(200, map[string]interface{}{"id": newUser.GeneratedKeys[0]})
+		r.JSON(200, map[string]interface{}{"id": id})
 	}
 
 	return

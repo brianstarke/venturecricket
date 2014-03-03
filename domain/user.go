@@ -4,8 +4,6 @@ import (
 	"log"
 
 	"code.google.com/p/go.crypto/bcrypt"
-
-	"github.com/brianstarke/venturecricket/domain"
 	"github.com/dancannon/gorethink"
 )
 
@@ -70,18 +68,17 @@ func (u UserDomain) FindById(id string) (User, error) {
 }
 
 func (u UserDomain) CreateUser(newUser *NewUser) (string, error) {
-	user := domain.User{}
-	user.Username = u.Username
-	user.EmailAddress = u.EmailAddress
+	user := User{}
+	user.Username = newUser.Username
+	user.EmailAddress = newUser.EmailAddress
 
-	b, err := bcrypt.GenerateFromPassword([]byte(u.Password), 10)
+	b, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), 10)
 	if err != nil {
-		r.JSON(500, map[string]interface{}{"serverError": err.Error()})
-		return
+		return "", err
 	}
 	user.PasswordHash = string(b)
 
-	resp, err := gorethink.Table(usersTable).Insert(user).RunWrite(session)
+	resp, err := gorethink.Table(usersTable).Insert(user).RunWrite(u.Session)
 	if err != nil {
 		return "", err
 	} else {
