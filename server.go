@@ -1,11 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
-	"net/http"
 	"time"
 
+	"github.com/brianstarke/venturecricket/domain"
 	"github.com/brianstarke/venturecricket/users"
 	"github.com/codegangsta/martini"
 	"github.com/codegangsta/martini-contrib/render"
@@ -15,6 +14,7 @@ import (
 var dbName = "venturecricket"
 var dbAddress = "localhost:28015"
 
+// TODO move all this to domain package
 func InitDB() *rethink.Session {
 	s, err := rethink.Connect(map[string]interface{}{
 		"address":     dbAddress,
@@ -41,8 +41,10 @@ func InitDB() *rethink.Session {
 
 func DB() martini.Handler {
 	session := InitDB()
+	userDomain := &domain.UserDomain{session}
 
 	return func(c martini.Context) {
+		c.Map(userDomain)
 		c.Map(session)
 		c.Next()
 	}
@@ -54,31 +56,13 @@ func main() {
 	m.Use(DB())
 
 	m.Get("/", func() string {
-		return "Hey there."
+		return "WORK IN PROGRESS"
 	})
 
 	// user routes
 	m.Get("/users", users.ListUsers)
-	m.Post("/users", HandleNewUser)
+	m.Get("/users/:id", users.GetUser)
+	m.Post("/users", users.CreateUser)
 
 	m.Run()
-}
-
-// test
-type NewUser struct {
-	Username     string `json:"username"`
-	EmailAddress string `json:"emailAddress"`
-}
-
-func HandleNewUser(req *http.Request, r render.Render) {
-	decoder := json.NewDecoder(req.Body)
-	var u NewUser
-	err := decoder.Decode(&u)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Print(u)
-
-	r.JSON(200, map[string]interface{}{"user added": "ok"})
 }
