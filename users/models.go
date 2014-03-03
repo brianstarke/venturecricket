@@ -1,10 +1,4 @@
-package models
-
-import "log"
-
-func init() {
-	log.Println("INIT")
-}
+package users
 
 type User struct {
 	Username       string `json:"username"`
