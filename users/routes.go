@@ -14,7 +14,7 @@ func ListUsers(userDomain *domain.UserDomain, r render.Render) {
 	users, err := userDomain.FindAll()
 
 	if err != nil {
-		r.JSON(500, err)
+		r.JSON(500, err.Error())
 	} else {
 		r.JSON(200, users)
 	}
@@ -26,7 +26,7 @@ func GetUser(userDomain *domain.UserDomain, params martini.Params, r render.Rend
 	user, err := userDomain.FindById(params["id"])
 
 	if err != nil {
-		r.JSON(500, err)
+		r.JSON(500, err.Error())
 	} else {
 		r.JSON(200, user)
 	}

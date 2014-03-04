@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"log"
 
 	"code.google.com/p/go.crypto/bcrypt"
@@ -10,6 +11,7 @@ import (
 var usersTable = "users"
 
 type User struct {
+	Id           string `json:"id" gorethink:"id"`
 	Username     string `json:"username"`
 	EmailAddress string `json:"emailAddress"`
 	Wins         uint32 `json:"wins"`
@@ -39,12 +41,12 @@ func (u UserDomain) FindAll() ([]User, error) {
 	}
 
 	for rows.Next() {
-		var u User
-		err := rows.Scan(&u)
+		var user User
+		err := rows.Scan(&user)
 		if err != nil {
 			log.Println(err)
 		}
-		result = append(result, u)
+		result = append(result, user)
 	}
 
 	return result, nil
@@ -67,8 +69,61 @@ func (u UserDomain) FindById(id string) (User, error) {
 	}
 }
 
+func (u UserDomain) FindByUsername(query string) (User, error) {
+	rows, err := gorethink.Table(usersTable).GetAllByIndex("Username", query).Run(u.Session)
+
+	if err != nil {
+		return User{}, err
+	}
+
+	if !rows.IsNil() {
+		var user User
+
+		rows.Next()
+		rows.Scan(&user)
+
+		return user, nil
+	} else {
+		return User{}, nil
+	}
+}
+
+func (u UserDomain) FindByEmailAddress(query string) (User, error) {
+	rows, err := gorethink.Table(usersTable).GetAllByIndex("EmailAddress", query).Run(u.Session)
+
+	if err != nil {
+		return User{}, err
+	}
+
+	if !rows.IsNil() {
+		var user User
+
+		rows.Next()
+		rows.Scan(&user)
+
+		return user, nil
+	} else {
+		return User{}, nil
+	}
+}
+
 func (u UserDomain) CreateUser(newUser *NewUser) (string, error) {
-	user := User{}
+	user, err := u.FindByUsername(newUser.Username)
+	if err != nil {
+		return "", err
+	}
+	if user.Username != "" {
+		return "", fmt.Errorf("User with username %s already exists", user.Username)
+	}
+
+	user, err = u.FindByEmailAddress(newUser.EmailAddress)
+	if err != nil {
+		return "", err
+	}
+	if user.Username != "" {
+		return "", fmt.Errorf("User with emailAddress %s already exists", user.EmailAddress)
+	}
+
 	user.Username = newUser.Username
 	user.EmailAddress = newUser.EmailAddress
 
