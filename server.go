@@ -21,6 +21,7 @@ func main() {
 	m.Get("/users", users.ListUsers)
 	m.Get("/users/:id", users.GetUser)
 	m.Post("/users", users.CreateUser)
+	m.Post("/users/authenticate", users.AuthenticateUser)
 
 	m.Run()
 }

@@ -11,14 +11,14 @@ import (
 var usersTable = "users"
 
 type User struct {
-	Id           string `json:"id" gorethink:"id"`
-	Username     string `json:"username"`
-	EmailAddress string `json:"emailAddress"`
-	Wins         uint32 `json:"wins"`
-	Losses       uint32 `json:"losses"`
-	Abandoned    uint32 `json:"abandoned"`
-	TotalMoney   uint32 `json:"totalMoney"`
-	PasswordHash string `json:"hashedPassword"`
+	Id           string `json:"id" gorethink:"id,omitempty"`
+	Username     string `json:"username" gorethink:"username"`
+	EmailAddress string `json:"emailAddress" gorethink:"emailAddress"`
+	Wins         uint32 `json:"wins" gorethink:"wins"`
+	Losses       uint32 `json:"losses" gorethink:"losses"`
+	Abandoned    uint32 `json:"abandoned" gorethink:"abandoned"`
+	TotalMoney   uint32 `json:"totalMoney" gorethink:"totalMoney"`
+	PasswordHash string `json:"hashedPassword" gorethink:"passwordHash"`
 }
 
 type NewUser struct {
@@ -69,11 +69,11 @@ func (u UserDomain) FindById(id string) (User, error) {
 	}
 }
 
-func (u UserDomain) FindByUsername(query string) (User, error) {
+func (u UserDomain) FindByUsername(query string) (*User, error) {
 	rows, err := gorethink.Table(usersTable).GetAllByIndex("Username", query).Run(u.Session)
 
 	if err != nil {
-		return User{}, err
+		return nil, err
 	}
 
 	if !rows.IsNil() {
@@ -82,17 +82,17 @@ func (u UserDomain) FindByUsername(query string) (User, error) {
 		rows.Next()
 		rows.Scan(&user)
 
-		return user, nil
+		return &user, nil
 	} else {
-		return User{}, nil
+		return nil, nil
 	}
 }
 
-func (u UserDomain) FindByEmailAddress(query string) (User, error) {
+func (u UserDomain) FindByEmailAddress(query string) (*User, error) {
 	rows, err := gorethink.Table(usersTable).GetAllByIndex("EmailAddress", query).Run(u.Session)
 
 	if err != nil {
-		return User{}, err
+		return nil, err
 	}
 
 	if !rows.IsNil() {
@@ -101,29 +101,64 @@ func (u UserDomain) FindByEmailAddress(query string) (User, error) {
 		rows.Next()
 		rows.Scan(&user)
 
-		return user, nil
+		return &user, nil
 	} else {
-		return User{}, nil
+		return nil, nil
 	}
 }
 
-func (u UserDomain) CreateUser(newUser *NewUser) (string, error) {
-	user, err := u.FindByUsername(newUser.Username)
+/*
+Takes username / email address and attempts to authenticate
+against the provided password.  Returns a reference to the User
+on success
+*/
+func (u UserDomain) Authenticate(query string, password string) (*User, error) {
+	user, err := u.FindByEmailAddress(query)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		user, err = u.FindByUsername(query)
+
+		if err != nil {
+			return nil, nil
+		}
+	}
+
+	// if we still don't have a the user, bail
+	if user == nil {
+		return nil, fmt.Errorf("No user found with username/emailAddress %s", query)
+	}
+
+	// attempt to authenticate password
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+
+	if err != nil {
+		return nil, fmt.Errorf("Invalid password for %s", query)
+	} else {
+		return user, nil
+	}
+}
+
+func (ud UserDomain) CreateUser(newUser *NewUser) (string, error) {
+	u, err := ud.FindByUsername(newUser.Username)
 	if err != nil {
 		return "", err
 	}
-	if user.Username != "" {
-		return "", fmt.Errorf("User with username %s already exists", user.Username)
+	if u != nil {
+		return "", fmt.Errorf("User with username %s already exists", u.Username)
 	}
 
-	user, err = u.FindByEmailAddress(newUser.EmailAddress)
+	u, err = ud.FindByEmailAddress(newUser.EmailAddress)
 	if err != nil {
 		return "", err
 	}
-	if user.Username != "" {
-		return "", fmt.Errorf("User with emailAddress %s already exists", user.EmailAddress)
+	if u != nil {
+		return "", fmt.Errorf("User with emailAddress %s already exists", u.EmailAddress)
 	}
 
+	user := User{}
 	user.Username = newUser.Username
 	user.EmailAddress = newUser.EmailAddress
 
@@ -133,11 +168,12 @@ func (u UserDomain) CreateUser(newUser *NewUser) (string, error) {
 	}
 	user.PasswordHash = string(b)
 
-	resp, err := gorethink.Table(usersTable).Insert(user).RunWrite(u.Session)
+	resp, err := gorethink.Table(usersTable).Insert(user).RunWrite(ud.Session)
 	if err != nil {
 		return "", err
 	} else {
 		log.Printf("New user created [%s][%s]", user.Username, user.EmailAddress)
+		log.Print(resp)
 		return resp.GeneratedKeys[0], nil
 	}
 }

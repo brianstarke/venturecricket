@@ -34,6 +34,30 @@ func GetUser(userDomain *domain.UserDomain, params martini.Params, r render.Rend
 	return
 }
 
+type UserAuthRequest struct {
+	Query    string `json:"query"`
+	Password string `json:"password"`
+}
+
+func AuthenticateUser(userDomain *domain.UserDomain, req *http.Request, r render.Render) {
+	var u UserAuthRequest
+	decoder := json.NewDecoder(req.Body)
+	err := decoder.Decode(&u)
+
+	if err != nil {
+		r.JSON(400, map[string]interface{}{"error": err.Error()})
+	}
+
+	// TODO validation
+
+	user, err := userDomain.Authenticate(u.Query, u.Password)
+	if err != nil {
+		r.JSON(400, err.Error())
+	} else {
+		r.JSON(200, user)
+	}
+}
+
 func CreateUser(userDomain *domain.UserDomain, req *http.Request, r render.Render) {
 	var u domain.NewUser
 	decoder := json.NewDecoder(req.Body)
