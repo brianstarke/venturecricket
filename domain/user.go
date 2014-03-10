@@ -50,8 +50,6 @@ func (u UserDomain) FindAll() ([]User, error) {
 		result = append(result, user)
 	}
 
-	u.SendPasswordResetEmail("test")
-
 	return result, nil
 }
 
@@ -181,6 +179,7 @@ func (ud UserDomain) CreateUser(newUser *NewUser) (string, error) {
 	}
 }
 
+// TODO move account info to .env, add more params
 func (u UserDomain) SendPasswordResetEmail(resetId string) {
 	sendgridUser := "brianstarke"
 	sendgridPass := "iO9w5dcQ1SUR"
@@ -189,9 +188,10 @@ func (u UserDomain) SendPasswordResetEmail(resetId string) {
 	message := sendgrid.NewMail()
 	message.AddTo("brian.starke@gmail.com")
 	message.AddToName("Brian Starke")
-	message.AddSubject("Password reset link for vc.dogfort.io")
+	message.AddSubject("Password reset link for Venturecricket")
 	message.AddText(resetId)
-	message.AddFrom("admin@dogfort.io")
+	message.AddFrom("venturecricket@dogfort.io")
+	message.AddFromName("venturecricket")
 	if r := sg.Send(message); r == nil {
 		log.Println("Email sent!")
 	} else {

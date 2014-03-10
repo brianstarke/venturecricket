@@ -17,11 +17,13 @@ func main() {
 		return "WORK IN PROGRESS, sendgrid"
 	})
 
+	// authentication routes
+	m.Post("/api/v1/authenticate", users.AuthenticateUser)
+
 	// user routes
-	m.Get("/users", users.ListUsers)
-	m.Get("/users/:id", users.GetUser)
-	m.Post("/users", users.CreateUser)
-	m.Post("/users/authenticate", users.AuthenticateUser)
+	m.Get("/api/v1/users", users.ListUsers)
+	m.Get("/api/v1/users/:id", users.GetUser)
+	m.Post("/api/v1/users", users.CreateUser)
 
 	m.Run()
 }
