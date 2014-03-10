@@ -6,6 +6,7 @@ import (
 
 	"code.google.com/p/go.crypto/bcrypt"
 	"github.com/dancannon/gorethink"
+	"github.com/sendgrid/sendgrid-go"
 )
 
 var usersTable = "users"
@@ -48,6 +49,8 @@ func (u UserDomain) FindAll() ([]User, error) {
 		}
 		result = append(result, user)
 	}
+
+	u.SendPasswordResetEmail("test")
 
 	return result, nil
 }
@@ -175,5 +178,23 @@ func (ud UserDomain) CreateUser(newUser *NewUser) (string, error) {
 		log.Printf("New user created [%s][%s]", user.Username, user.EmailAddress)
 		log.Print(resp)
 		return resp.GeneratedKeys[0], nil
+	}
+}
+
+func (u UserDomain) SendPasswordResetEmail(resetId string) {
+	sendgridUser := "brianstarke"
+	sendgridPass := "iO9w5dcQ1SUR"
+	sg := sendgrid.NewSendGridClient(sendgridUser, sendgridPass)
+
+	message := sendgrid.NewMail()
+	message.AddTo("brian.starke@gmail.com")
+	message.AddToName("Brian Starke")
+	message.AddSubject("Password reset link for vc.dogfort.io")
+	message.AddText(resetId)
+	message.AddFrom("admin@dogfort.io")
+	if r := sg.Send(message); r == nil {
+		log.Println("Email sent!")
+	} else {
+		log.Println(r)
 	}
 }

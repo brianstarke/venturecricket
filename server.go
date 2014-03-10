@@ -14,7 +14,7 @@ func main() {
 
 	// root route, replace with public app later
 	m.Get("/", func() string {
-		return "WORK IN PROGRESS"
+		return "WORK IN PROGRESS, sendgrid"
 	})
 
 	// user routes
