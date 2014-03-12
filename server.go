@@ -12,11 +12,6 @@ func main() {
 	m.Use(render.Renderer())
 	m.Use(domain.DomainMiddleware())
 
-	// root route, replace with public app later
-	m.Get("/", func() string {
-		return "WORK IN PROGRESS, sendgrid"
-	})
-
 	// authentication routes
 	m.Post("/api/v1/authenticate", users.AuthenticateUser)
 
