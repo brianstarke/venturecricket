@@ -13,7 +13,7 @@ func main() {
 	m.Use(domain.DomainMiddleware())
 
 	// authentication routes
-	m.Post("/api/v1/authenticate", users.AuthenticateUser)
+	m.Post("/api/v1/auth/login", users.AuthenticateUser)
 
 	// user routes
 	m.Get("/api/v1/users", users.ListUsers)
