@@ -1,48 +1,21 @@
 package domain
 
 import (
-	"log"
-	"time"
-
 	"github.com/codegangsta/martini"
-	"github.com/dancannon/gorethink"
+	"labix.org/v2/mgo"
 )
 
-var dbName = "venturecricket"
-var dbAddress = "localhost:28015"
+var dbAddress = "localhost"
+var dbName = "vc"
 
-func initDB() *gorethink.Session {
-	s, err := gorethink.Connect(map[string]interface{}{
-		"address":     dbAddress,
-		"database":    dbName,
-		"maxIdle":     10,
-		"idleTimeout": time.Second * 10,
-	})
+func initDB() *mgo.Database {
+	session, err := mgo.Dial(dbAddress)
 
 	if err != nil {
-		log.Println(err)
+		panic(err)
+	} else {
+		return session.DB(dbName)
 	}
-	err = gorethink.DbCreate(dbName).Exec(s)
-	if err != nil {
-		log.Println(err)
-	}
-
-	_, err = gorethink.Db(dbName).TableCreate("users").RunWrite(s)
-	if err != nil {
-		log.Println(err)
-	}
-
-	_, err = gorethink.Db(dbName).Table("users").IndexCreate("Username").Run(s)
-	if err != nil {
-		log.Println(err)
-	}
-
-	_, err = gorethink.Db(dbName).Table("users").IndexCreate("EmailAddress").Run(s)
-	if err != nil {
-		log.Println(err)
-	}
-
-	return s
 }
 
 /*

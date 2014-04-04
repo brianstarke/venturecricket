@@ -5,106 +5,90 @@ import (
 	"log"
 
 	"code.google.com/p/go.crypto/bcrypt"
-	"github.com/dancannon/gorethink"
 	"github.com/sendgrid/sendgrid-go"
+	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
 )
 
 var usersTable = "users"
 
 type User struct {
-	Id           string `json:"id" gorethink:"id,omitempty"`
-	Username     string `json:"username" gorethink:"username"`
-	EmailAddress string `json:"emailAddress" gorethink:"emailAddress"`
-	Wins         uint32 `json:"wins" gorethink:"wins"`
-	Losses       uint32 `json:"losses" gorethink:"losses"`
-	Abandoned    uint32 `json:"abandoned" gorethink:"abandoned"`
-	TotalMoney   uint32 `json:"totalMoney" gorethink:"totalMoney"`
-	PasswordHash string `json:"hashedPassword" gorethink:"passwordHash"`
+	Id           bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	Username     string        `json:"username"`
+	EmailAddress string        `json:"emailAddress"`
+	Wins         uint32        `json:"wins"`
+	Losses       uint32        `json:"losses"`
+	Abandoned    uint32        `json:"abandoned"`
+	TotalMoney   uint32        `json:"totalMoney"`
+	PasswordHash string        `json:"passwordHash"`
 }
 
 type NewUser struct {
-	Username     string `json:"username"`
-	EmailAddress string `json:"emailAddress"`
-	Password     string `json:"password"`
+	Username     string
+	EmailAddress string
+	Password     string
 }
 
 type UserDomain struct {
-	Session *gorethink.Session
+	Database *mgo.Database
 }
 
-func (u UserDomain) FindAll() ([]User, error) {
+func (u UserDomain) FindAll() (*[]User, error) {
+	c := u.Database.C(usersTable)
+
 	result := []User{}
 
-	rows, err := gorethink.Table(usersTable).Run(u.Session)
-
-	if err != nil {
-		return result, err
-	}
-
-	for rows.Next() {
-		var user User
-		err := rows.Scan(&user)
-		if err != nil {
-			log.Println(err)
-		}
-		result = append(result, user)
-	}
-
-	return result, nil
-}
-
-func (u UserDomain) FindById(id string) (User, error) {
-	row, err := gorethink.Table(usersTable).Get(id).RunRow(u.Session)
-
-	if err != nil {
-		return User{}, err
-	}
-
-	if !row.IsNil() {
-		var user User
-		row.Scan(&user)
-
-		return user, nil
-	} else {
-		return User{}, nil
-	}
-}
-
-func (u UserDomain) FindByUsername(query string) (*User, error) {
-	rows, err := gorethink.Table(usersTable).GetAllByIndex("Username", query).Run(u.Session)
+	err := c.Find(bson.M{}).All(&result)
 
 	if err != nil {
 		return nil, err
-	}
-
-	if !rows.IsNil() {
-		var user User
-
-		rows.Next()
-		rows.Scan(&user)
-
-		return &user, nil
 	} else {
-		return nil, nil
+		return &result, nil
 	}
 }
 
-func (u UserDomain) FindByEmailAddress(query string) (*User, error) {
-	rows, err := gorethink.Table(usersTable).GetAllByIndex("EmailAddress", query).Run(u.Session)
+func (u UserDomain) FindById(id string) (*User, error) {
+	c := u.Database.C(usersTable)
+
+	result := User{}
+
+	err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(&result)
 
 	if err != nil {
 		return nil, err
-	}
-
-	if !rows.IsNil() {
-		var user User
-
-		rows.Next()
-		rows.Scan(&user)
-
-		return &user, nil
 	} else {
-		return nil, nil
+		return &result, nil
+	}
+}
+
+func (u UserDomain) FindByUsername(query string) *User {
+	c := u.Database.C(usersTable)
+
+	result := User{}
+
+	err := c.Find(bson.M{"Username": query}).One(&result)
+	log.Print(err)
+
+	if err != nil {
+		log.Printf("mgo error looking up %s, err is : %s", query, err.Error())
+		return nil
+	} else {
+		return &result
+	}
+}
+
+func (u UserDomain) FindByEmailAddress(query string) *User {
+	c := u.Database.C(usersTable)
+
+	result := User{}
+
+	err := c.Find(bson.M{"EmailAddress": query}).One(&result)
+
+	if err != nil {
+		log.Printf("mgo error looking up %s, err is : %s", query, err.Error())
+		return nil
+	} else {
+		return &result
 	}
 }
 
@@ -114,17 +98,10 @@ against the provided password.  Returns a reference to the User
 on success
 */
 func (u UserDomain) Authenticate(query string, password string) (*User, error) {
-	user, err := u.FindByEmailAddress(query)
-	if err != nil {
-		return nil, err
-	}
+	user := u.FindByEmailAddress(query)
 
 	if user == nil {
-		user, err = u.FindByUsername(query)
-
-		if err != nil {
-			return nil, nil
-		}
+		user = u.FindByUsername(query)
 	}
 
 	// if we still don't have a the user, bail
@@ -133,7 +110,7 @@ func (u UserDomain) Authenticate(query string, password string) (*User, error) {
 	}
 
 	// attempt to authenticate password
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 
 	if err != nil {
 		return nil, fmt.Errorf("Invalid password for %s", query)
@@ -142,21 +119,17 @@ func (u UserDomain) Authenticate(query string, password string) (*User, error) {
 	}
 }
 
-func (ud UserDomain) CreateUser(newUser *NewUser) (string, error) {
-	u, err := ud.FindByUsername(newUser.Username)
-	if err != nil {
-		return "", err
-	}
+func (ud UserDomain) CreateUser(newUser *NewUser) (bool, error) {
+	u := ud.FindByUsername(newUser.Username)
+
 	if u != nil {
-		return "", fmt.Errorf("User with username %s already exists", u.Username)
+		return false, fmt.Errorf("User with username %s already exists", u.Username)
 	}
 
-	u, err = ud.FindByEmailAddress(newUser.EmailAddress)
-	if err != nil {
-		return "", err
-	}
+	u = ud.FindByEmailAddress(newUser.EmailAddress)
+
 	if u != nil {
-		return "", fmt.Errorf("User with emailAddress %s already exists", u.EmailAddress)
+		return false, fmt.Errorf("User with emailAddress %s already exists", u.EmailAddress)
 	}
 
 	user := User{}
@@ -165,17 +138,18 @@ func (ud UserDomain) CreateUser(newUser *NewUser) (string, error) {
 
 	b, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), 10)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 	user.PasswordHash = string(b)
 
-	resp, err := gorethink.Table(usersTable).Insert(user).RunWrite(ud.Session)
+	c := ud.Database.C(usersTable)
+
+	err = c.Insert(&user)
+
 	if err != nil {
-		return "", err
+		return false, err
 	} else {
-		log.Printf("New user created [%s][%s]", user.Username, user.EmailAddress)
-		log.Print(resp)
-		return resp.GeneratedKeys[0], nil
+		return true, err
 	}
 }
 
