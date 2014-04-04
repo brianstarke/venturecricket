@@ -3,6 +3,7 @@ package domain
 import (
 	"log"
 	"math/rand"
+	"time"
 
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -103,6 +104,7 @@ func (d CardDomain) CreateDeck(gameId string) bool {
 
 	// create a randomized slice of deck positions,
 	// such that we create a "shuffled" deck
+	rand.Seed(time.Now().UTC().UnixNano())
 	p := rand.Perm(55)
 	for k, _ := range p {
 		p[k]++
