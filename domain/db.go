@@ -22,11 +22,13 @@ func initDB() *mgo.Database {
 Make domain structs available to handlers via middleware
 */
 func DomainMiddleware() martini.Handler {
-	session := initDB()
-	userDomain := &UserDomain{session}
+	db := initDB()
+	userDomain := &UserDomain{db}
+	cardDomain := &CardDomain{db}
 
 	return func(c martini.Context) {
 		c.Map(userDomain)
+		c.Map(cardDomain)
 		c.Next()
 	}
 }
