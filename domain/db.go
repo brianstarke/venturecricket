@@ -25,10 +25,12 @@ func DomainMiddleware() martini.Handler {
 	db := initDB()
 	userDomain := &UserDomain{db}
 	cardDomain := &CardDomain{db}
+	gameDomain := &GameDomain{db}
 
 	return func(c martini.Context) {
 		c.Map(userDomain)
 		c.Map(cardDomain)
+		c.Map(gameDomain)
 		c.Next()
 	}
 }

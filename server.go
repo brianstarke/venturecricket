@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/brianstarke/venturecricket/cards"
 	"github.com/brianstarke/venturecricket/domain"
+	"github.com/brianstarke/venturecricket/games"
 	"github.com/brianstarke/venturecricket/users"
 	"github.com/codegangsta/martini"
 	"github.com/codegangsta/martini-contrib/render"
@@ -24,6 +25,9 @@ func main() {
 	// card routes
 	m.Get("/api/v1/cards/get/:gameId", cards.GetCards)
 	m.Get("/api/v1/cards/create/:gameId", cards.CreateDeck)
+
+	// game routes
+	m.Post("/api/v1/games", games.CreateGame)
 
 	m.Run()
 }
