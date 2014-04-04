@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
@@ -66,7 +67,7 @@ and maps to the Users collection.
 type Card struct {
 	Id       bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	GameId   string        `json:"gameId"`
-	PlayerId string        `json:"playerId"`
+	PlayerId string        `json:"playerId" bson:"omitempty"`
 	Suit     CardSuit      `json:"suit"`
 	Location CardLocation  `json:"location"`
 	Position int           `json:"position"`
@@ -78,7 +79,7 @@ type CardDomain struct {
 	Database *mgo.Database
 }
 
-func (d CardDomain) FindAllByGameId(id string) *[]Card {
+func (d CardDomain) FindAllByGameId(id string) (*[]Card, error) {
 	c := d.Database.C(cardsTable)
 
 	results := []Card{}
@@ -87,17 +88,26 @@ func (d CardDomain) FindAllByGameId(id string) *[]Card {
 
 	if err != nil {
 		log.Printf("mgo error %s, err is : %s", id, err.Error())
-		return nil
+		return nil, err
 	} else {
-		return &results
+		return &results, nil
 	}
 }
 
 /*
 Generates a deck for the given gameId
 */
-func (d CardDomain) CreateDeck(gameId string) bool {
-	// TODO, check if this game already has a deck
+func (d CardDomain) CreateDeck(gameId string) error {
+	cards, err := d.FindAllByGameId(gameId)
+
+	if err != nil {
+		return err
+	}
+
+	if len(*cards) > 0 {
+		return fmt.Errorf("There is already a deck for gameId %s", gameId)
+	}
+
 	c := d.Database.C(cardsTable)
 
 	suits := [5]CardSuit{Red, Green, Blue, Purple, Yellow}
@@ -113,7 +123,7 @@ func (d CardDomain) CreateDeck(gameId string) bool {
 	for i := 0; i < 5; i++ {
 		var suit = suits[i]
 
-		for j := 2; j < 10; j++ {
+		for j := 2; j < 13; j++ {
 			x := p[len(p)-1]
 			p = p[:len(p)-1]
 
@@ -121,34 +131,22 @@ func (d CardDomain) CreateDeck(gameId string) bool {
 			card.GameId = gameId
 			card.Location = Deck
 			card.Suit = suit
-			card.Type = Investment
-			card.Value = j
 			card.Position = x
 
-			err := c.Insert(&card)
-			if err != nil {
-				log.Print(err.Error())
+			if j <= 10 {
+				card.Type = Investment
+				card.Value = j
+			} else {
+				card.Type = Multiplier
+				card.Value = 1
 			}
-		}
-
-		for l := 0; l < 3; l++ {
-			x := p[len(p)-1]
-			p = p[:len(p)-1]
-
-			card := Card{}
-			card.GameId = gameId
-			card.Location = Deck
-			card.Suit = suit
-			card.Type = Multiplier
-			card.Value = 1
-			card.Position = x
 
 			err := c.Insert(&card)
 			if err != nil {
-				log.Print(err.Error())
+				return err
 			}
 		}
 	}
 
-	return true
+	return nil
 }

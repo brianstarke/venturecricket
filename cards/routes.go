@@ -8,10 +8,10 @@ import (
 )
 
 func GetCards(cardDomain *domain.CardDomain, params martini.Params, r render.Render) {
-	cards := cardDomain.FindAllByGameId(params["gameId"])
+	cards, err := cardDomain.FindAllByGameId(params["gameId"])
 
-	if cards == nil {
-		r.JSON(500, "No cards matching that game id")
+	if err != nil {
+		r.JSON(500, err.Error())
 	} else {
 		r.JSON(200, cards)
 	}
@@ -20,12 +20,12 @@ func GetCards(cardDomain *domain.CardDomain, params martini.Params, r render.Ren
 }
 
 func CreateDeck(cardDomain *domain.CardDomain, params martini.Params, r render.Render) {
-	res := cardDomain.CreateDeck(params["gameId"])
+	err := cardDomain.CreateDeck(params["gameId"])
 
-	if res {
-		r.JSON(200, "WIN")
+	if err != nil {
+		r.JSON(500, err.Error())
 	} else {
-		r.JSON(500, "FAIL")
+		r.JSON(200, "ok")
 	}
 
 	return
